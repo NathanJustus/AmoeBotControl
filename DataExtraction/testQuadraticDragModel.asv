@@ -1,0 +1,34 @@
+dx = 0.1;
+dy = 1;
+mu = diag([dx,dy]);
+
+n = 200;
+fluidVelocity = 1;
+angleOfAttack = linspace(0,pi/2,n);
+
+lift = zeros(1,n);
+drag = zeros(1,n);
+
+panelXDrag = zeros(1,n);
+panelYDrag = zeros(1,n);
+
+for i = 1:n
+    alpha = angleOfAttack(i);
+    xVel = -fluidVelocity*cos(alpha);
+    yVel = fluidVelocity*sin(alpha);
+    
+    V = [xVel;yVel];
+    V_hat = V/flowVelocity;
+    beta = pi/2 - alpha;
+    L_hat = [cos(beta);sin(beta)];
+    
+    D = mu*(abs(V).*V);
+    panelXDrag(i) = D(1);
+    panelYDrag(i) = D(2);
+    drag(i) = dot(D,V_hat);
+    lift(i) = dot(D,L_hat);
+end
+    
+
+
+

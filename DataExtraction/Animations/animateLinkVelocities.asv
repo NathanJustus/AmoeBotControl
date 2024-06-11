@@ -1,0 +1,63 @@
+ amoeBot = constructSampleAmoebot(10);
+
+ figure(1);
+ clf;
+ 
+ animationAxis = subplot(1,2,1);
+ cla(animationAxis);
+ hold on;
+ XForceAxis = subplot(2,2,2);
+ cla(XForceAxis);
+ hold on;
+ YForceAxis = subplot(2,2,4);
+ cla(YForceAxis);
+ hold on;
+ 
+ FPS = 60;
+ secondsMove = 3;
+ secondsPause = 2;
+ 
+ alphas = linspace(pi/6,pi/2,secondsMove*FPS);
+ xForces = zeros(1,numel(alphas));
+ yForces = zeros(1,numel(alphas));
+ time = linspace(0,1,numel(alphas));
+ forceLims = [-.5,.5];
+ directionSpecifier = ' - Backward';
+ 
+ firstFrame = 1;
+ for i = 1:numel(alphas)
+     [xf,yf] = visualizeLinkVelocities(amoeBot,alphas(i),1/3,'alpha',animationAxis);
+     xForces(i) = xf;
+     yForces(i) = yf;
+     title(animationAxis,['Link Velocity Visualization',directionSpecifier]);
+     
+     cla(XForceAxis);
+     plot(XForceAxis,time(1:i),xForces(1:i));
+     plot(XForceAxis,[time(i),time(i)],forceLims,'--k');
+     title(XForceAxis,['Thrust Force',direction);
+     set(XForceAxis,'XLim',[0,1]);
+     set(XForceAxis,'YLim',forceLims);
+     
+     cla(YForceAxis);
+     plot(YForceAxis,time(1:i),yForces(1:i));
+     plot(YForceAxis,[time(i),time(i)],forceLims,'--k');
+     title(YForceAxis,'Lateral Force');
+     set(YForceAxis,'XLim',[0,1]);
+     set(YForceAxis,'YLim',forceLims);
+     
+     drawnow;
+     
+     if firstFrame
+         gif('LinkJacobianDemo.gif','DelayTime',1/FPS);
+         firstFrame = 0;
+     else
+         gif;
+     end
+     
+ end
+ 
+ for i = 1:(secondsPause*FPS)
+     gif;
+ end
+     
+     

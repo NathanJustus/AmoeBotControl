@@ -1,0 +1,93 @@
+clear all;
+load('experimentalData.mat');
+
+close all;
+figure(1);
+
+ax11 = subplot(3,2,1);
+hold on;
+title('Alpha');
+xlabel('Time');
+
+ax12 = subplot(3,2,2);
+hold on;
+title('Alpha Velocity');
+xlabel('Time');
+
+ax21 = subplot(3,2,3);
+hold on;
+title('Alpha Acceleration');
+xlabel('Time');
+
+ax22 = subplot(3,2,4);
+hold on;
+title('Base Length');
+xlabel('Time');
+
+ax31 = subplot(3,2,5);
+hold on;
+title('Base Length Velocity');
+xlabel('Time');
+
+ax32 = subplot(3,2,6);
+hold on;
+title('Base Length Acceleration');
+xlabel('Time');
+
+data = experimentalData{1};
+
+for i = 1:size(data.Fx,1)
+
+    ts = data.Time(i,:);
+    alpha = data.Alpha(i,:);
+    baseLength = data.BaseLength(i,:);
+
+    [dA,ts2] = derive(ts,alpha,1);
+    ddA = derive(ts,alpha,2);
+    dB = derive(ts,baseLength,1);
+    ddB = derive(ts,baseLength,2);
+    dA = boxcarFilter(dA);
+    ddA = boxcarFilter(dd)
+
+    plot(ax11,ts,alpha);
+    plot(ax12,ts,baseLength);
+    plot(ax21,ts2,dA);
+    plot(ax22,ts2,dB);
+    plot(ax31,ts2,ddA);
+    plot(ax32,ts2,ddB);
+end
+    
+
+
+function [dx,newT] = derive(t,x,derivOrder)
+
+    dt = t(2)-t(1);
+
+    if derivOrder == 1
+        stamp = [1 -8 0 8 -1]/(12*dt);
+    elseif derivOrder == 2
+        stamp = [-1 16 -30 16 -1]/(12*dt*dt);
+    else
+        error('Incorrect order of derivative specified');
+    end
+
+    dx = conv(x,fliplr(stamp),'valid');
+    if nargout > 1
+        newT = t(3:end-2);
+    end
+
+end
+
+function fx = boxcarFilter(x,ws)
+
+    if nargin == 1
+        ws = 3;
+    end
+
+    b = (1/ws)*ones(1,ws);
+    a = 1;
+
+    fx = filter(b,a,x);
+
+end
+

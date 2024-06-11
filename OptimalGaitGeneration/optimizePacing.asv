@@ -1,0 +1,103 @@
+amoeBot = constructSampleAmoebot();
+load(['optimalForwardRightGait.mat']);
+
+options = struct();
+options.equalizeAngles = false;
+options.flipDisplacement = true;
+options.flipAngles = false;
+gait = translateGaitFromSysplotterFormat(p,options);
+
+% lb_pace = .2;
+% ub_pace = 1;
+
+%initialParams = [.635,-.397,.47,.02,.055,-.2,-.1]';
+initialParamsC = [.9,0,0,0,0,0,0,0,0,gait.normArcLength]';
+A = [];
+b = [];
+Aeq = [];
+beq = [];
+lb = -2*ones(10,1);
+lb(1) = .5;
+lb(end) = gait.normArcLength;
+ub = 2*ones(10,1);
+ub(end) = gait.normArcLength;
+
+
+%options = optimoptions('fmincon','Display','iter');
+% options = optimset('Display','iter');
+optionsOptimizer = optimoptions('fmincon','Display','iter');
+optFunForward = @(params) valueFunForward(params,amoeBot,gait);
+% conFun = @(params) pacingConstraints(params,lb_pace,ub_pace,gait.arcLength);
+
+global xminForward
+global fminForward
+
+xminForward = initialParamsForward;
+fminForward = 0; 
+
+x = fmincon(optFun,initialParams,[],[],[],[],[],[],conFun,optionsOptimizer)
+xForward = fmincon(optFunForward,initialParamsForward,A,b,Aeq,beq,lb,ub,[],options);
+p_forward = p;
+gait_combo_opts = gait;
+gait_combo_opts.pacing = constructPacingFunctionFromFourierParams(xForward);
+gait_combo_opts.pacingParams = xForward;
+gait_combo_global = gait;
+gait_combo_global.pacing = constructPacingFunctionFromFourierParams(xminForward);
+gait_combo_global.pacingParams = xminForward;
+
+save('DataFiles/comboPacingOptimization.mat')
+
+%%
+
+function f = valueFunForward(params,amoeBot,gait)
+
+    global xminForward
+    global fminForward
+
+    gait.pacing = constructPacingFunctionFromFourierParams(params);
+    displacements = simulateFreeSwimmingAmoeBot_withPacing(amoeBot,gait);
+    exponentialVelocities = displacementToExponentialCoordinates(displacements);
+    f = -1*exponentialVelocities(1);
+
+    if f < fminForward
+        fminForward = f;
+        xminForward = params;
+    end
+
+end
+
+function f = valueFunTurn(params,amoeBot,gait)
+
+    global xminTurn
+    global fminTurn
+
+    gait.pacing = constructPacingFunctionFromFourierParams(params);
+    displacements = simulateFreeSwimmingAmoeBot_withPacing(amoeBot,gait);
+    exponentialVelocities = displacementToExponentialCoordinates(displacements);
+    f = -1*exponentialVelocities(3);
+
+    if f < fminTurn
+        fminTurn = f;
+        xminTurn = params;
+    end
+
+end
+
+function f = valueFunCombo(params,amoeBot,gait)
+
+    global xminTurn
+    global fminTurn
+
+    gait.pacing = constructPacingFunctionFromFourierParams(params);
+    displacements = simulateFreeSwimmingAmoeBot_withPacing(amoeBot,gait);
+    exponentialVelocities = displacementToExponentialCoordinates(displacements);
+    xVel = exponentialVelocities(1);
+    thetaVel = exponentialVelocities(3);
+    f = -1*(xVel/.05 + thetaVel/.09);
+
+    if f < fminTurn
+        fminTurn = f;
+        xminTurn = params;
+    end
+
+end
